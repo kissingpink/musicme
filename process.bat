@@ -1,0 +1,1 @@
+ffmpeg -i %1 -y -acodec dfpwm -ac 1 -ar 48000 -vn -fs 25000000 -f dfpwm %1.dfpwm
