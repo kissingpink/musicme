@@ -1,4 +1,4 @@
-local baseRepoURL = "https://raw.githubusercontent.com/knijn/musicify/main"
+local baseRepoURL = "https://raw.githubusercontent.com/JaredWogan/musicme/master"
 local args = { ... }
 local skipcheck = false
 
@@ -9,19 +9,23 @@ end
 while true do
     event, url, handle = os.pullEvent()
     if event == "http_failure" then
+        shell.run("clear")
         error("Failed to download file: " .. handle)
     end
     if event == "http_success" then
+        shell.run("clear")
         print(handle.getResponseCode())
         local data = textutils.unserialiseJSON(handle.readAll())
         local url = data[1].assets[1].browser_download_url
 
-        print("Downloading musicme from: " .. url .. ", is this okay? (n to cancel, anything else to continue)")
+        print("\n\nDownloading musicme from: " .. url .. ", is this okay? (n to cancel, anything else to continue)")
         local input = read()
         if not skipcheck and input == keys.n then
-            error("Cancelled Installation")
+            shell.run("clear")
+            error("\n\nCancelled Installation\n\n")
         end
 
+        shell.run("clear")
         print("Installing now")
         shell.run("rm musicify")
         shell.run("wget " .. url)
