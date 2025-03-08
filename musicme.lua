@@ -9,7 +9,7 @@ local dfpwm = require("/lib/dfpwm")
 if not dfpwm then error("dfpwm wasn't found") end
 
 -- Options
-local version = "3.2.1"
+local version = "1.0.0"
 local repo = "https://raw.githubusercontent.com/knijn/musicify-songs/main/index.json"
 local autoUpdates = true
 local indexURL = repo .. "?cb=" .. os.epoch("utc")
