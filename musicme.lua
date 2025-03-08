@@ -10,7 +10,7 @@ if not dfpwm then error("dfpwm wasn't found") end
 
 -- Options
 local version = "1.0.0"
-local repo = "https://raw.githubusercontent.com/knijn/musicify-songs/main/index.json"
+local repo = "https://raw.githubusercontent.com/JaredWogan/musicme/master/index.json"
 local autoUpdates = true
 local indexURL = repo .. "?cb=" .. os.epoch("utc")
 
