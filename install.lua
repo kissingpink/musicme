@@ -1,3 +1,4 @@
+local apiURL = "http://api.github.com/repos/JaredWogan/musicme/releases"
 local baseRepoURL = "https://raw.githubusercontent.com/JaredWogan/musicme/master"
 local args = { ... }
 local skipcheck = false
@@ -5,6 +6,9 @@ local skipcheck = false
 if args and args[1] == "y" then
     skipcheck = true
 end
+
+http.request(apiURL)
+print("Made request to " .. apiURL)
 
 while true do
     event, url, handle = os.pullEvent()
