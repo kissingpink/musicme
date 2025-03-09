@@ -294,6 +294,7 @@ musicify
     gui             -- Starts the GUI. GUI computer must have a modem attached. Will automatically detect monitors.
     client          -- Runs the client. Clients must have a modem and a speaker attached.
     update          -- Updates musicme
+    startup <arg>   -- Creates a startup file. Specify whether it is for 'client' or for 'gui'
 ]])
 end
 
@@ -323,13 +324,40 @@ musicme.shuffle = function(arguments)
     end
 end
 
+musicme.monitor = function(arguments)
+    shell.run("monitor " .. peripheral.getName(monitor) .. " musicme gui")
+end
+
+musicme.startup = function(arguments)
+    if arguments ~= "client" or arguments ~= "gui" then
+        print("Must indicate whether startup file is for GUI or for client.")
+        print("Use 'musicme help' for help")
+        return
+    end
+    local mode = table.remove(arguments, 1)
+    if fs.exists("startup.lua") then
+        fs.move("startup.lua", "/old.musicme/startup.lua")
+    end
+    if mode == "client" then
+        fs.copy("/lib/clientStartup.lua", "startup.lua")
+    end
+    if mode == "gui" then
+        fs.copy("/lib/clientStartup.lua", "startup.lua")
+    end
+    print("startup.lua created successfully")
+end
 
 local command = table.remove(args, 1)
+for i, o in pairs(args) do
+    print(i .. " - " .. o)
+end
+
+if monitor then
+    term.redirect(monitor)
+end
+
 if musicme[command] then
-    if command == "gui" and monitor then
-        shell.run("monitor " .. peripheral.getName(monitor) .. "musicme gui")
-    end
     musicme[command](args)
 else
-    print("Please provide a valid command. For usage, use `musicify help`.")
+    print("Please provide a valid command. For usage, use `musicime help`.")
 end
