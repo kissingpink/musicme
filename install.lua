@@ -41,7 +41,15 @@ while true do
         shell.run("wget " .. baseRepoURL .. "/lib/semver.lua /lib/semver.lua")
         shell.run("wget " .. baseRepoURL .. "/lib/dfpwm.lua /lib/dfpwm.lua")
         shell.run("wget " .. baseRepoURL .. "/lib/basalt.lua /lib/basalt.lua")
+
+        os.sleep(2)
+        shell.run("clear")
         print("Done!")
+        os.sleep(1)
+        shell.run("clear")
+
+        print("Thank you for installing musicme")
+        print("Run 'musicme help' for help")
         return
     end
 end

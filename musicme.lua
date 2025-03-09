@@ -25,6 +25,7 @@ local stopChannel = controlChannel + 5
 -- Peripherals
 local modem = peripheral.find("modem")
 local speaker = peripheral.find("speaker")
+local monitor = peripheral.find("monitor")
 
 -- HTTP Handle (Loads song library)
 local handle, msg = http.get(indexURL)
@@ -290,10 +291,9 @@ Usage: <action> [arguments]
 Actions:
 musicify
     help            -- Displays this message
-    info            -- Displays information about Musicify's version and repo
-    gui             -- Starts the GUI
-    update          -- Updates musicify
-    url <url>       -- Play a song from a URL
+    gui             -- Starts the GUI. GUI computer must have a modem attached. Will automatically detect monitors.
+    client          -- Runs the client. Clients must have a modem and a speaker attached.
+    update          -- Updates musicme
 ]])
 end
 
@@ -325,9 +325,10 @@ end
 
 
 local command = table.remove(args, 1)
-musicme.index = index
-
 if musicme[command] then
+    if command == "gui" and monitor then
+        shell.run("monitor " .. peripheral.getName(monitor) .. "musicme gui")
+    end
     musicme[command](args)
 else
     print("Please provide a valid command. For usage, use `musicify help`.")
