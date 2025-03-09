@@ -13,23 +13,27 @@ local version = "1.0.0"
 local repo = "https://raw.githubusercontent.com/JaredWogan/musicme/master/index.json"
 local autoUpdates = true
 local indexURL = repo .. "?cb=" .. os.epoch("utc")
+local bufferLength = 16
+local clientVolume = 1
+local serverVolume = 0
 
 -- Channels
 local controlChannel = 2561
-local connectChannel = controlChannel + 1
-local bufferChannel = controlChannel + 2
-local startChannel = controlChannel + 3
-local pauseChannel = controlChannel + 4
-local stopChannel = controlChannel + 5
+local bufferChannel = controlChannel + 1
+local clientChannel = controlChannel + 2
 
 -- Peripherals
 local modem = peripheral.find("modem")
 local speaker = peripheral.find("speaker")
 local monitor = peripheral.find("monitor")
 
+-- Ensure there is a modem and speaker
+if not modem then error("There needs to be a modem attached") end
+if not speaker then error("There needs to be a speaker attached") end
+
 -- HTTP Handle (Loads song library)
-local handle, msg = http.get(indexURL)
-if not handle then error(msg) end
+local handle, msgError = http.get(indexURL)
+if not handle then error(msgError) end
 
 local indexJSON = handle.readAll()
 handle.close()
@@ -51,78 +55,68 @@ end
 local musicme = {}
 local args = { ... }
 
--- Ensure there is a modem
-if not modem then error("There needs to be a modem attached") end
-
-local awaitMessage = function(channel, replyChannel, message)
+local awaitMessage = function(channel, replyChannel, command)
     local e, s, c, rc, msg, d = os.pullEvent("modem_message")
-    while c ~= channel and rc ~= replyChannel and msg ~= message do
-        e, s, c, rc, msg, d = os.pullEvent("modem_message")
+    if command == "any" then
+        while c ~= channel and rc ~= replyChannel do
+            e, s, c, rc, msg, d = os.pullEvent("modem_message")
+        end
+        return msg
     end
+    if command and command ~= "any" then
+        while c ~= channel and rc ~= replyChannel and msg.command ~= command do
+            e, s, c, rc, msg, d = os.pullEvent("modem_message")
+        end
+        return msg
+    end
+    error("Invalid function arguments: <" .. tostring(channel) .. ", " .. tostring(replyChannel) .. ", " .. command .. ">")
 end
 
-local playBuffer = function(buffer)
-    while not speaker.playAudio(buffer) do os.pullEvent("speaker_audio_empty") end
+local playBuffer = function(buffer, volume)
+    if not volume then volume = 1 end
+    while not speaker.playAudio(buffer, volume) do os.pullEvent("speaker_audio_empty") end
 end
 
 -- Run the speaker client
 musicme.client = function(arguments)
-    -- Ensure there is a speaker
-    if not speaker then error("Speaker not found", 0) end
-
     modem.open(bufferChannel)
-    modem.open(pauseChannel)
-    modem.open(stopChannel)
-
-    local paused = false
-    local buffer = nil
+    modem.open(clientChannel)
 
     local bufferPlayback = function()
+        local msg
         while true do
-            if not paused then
-                modem.transmit(controlChannel, bufferChannel, true)
-                local e, s, c, rc, msg, d = os.pullEvent("modem_message")
-                if rc == controlChannel and c == bufferChannel then
-                    buffer = msg
-                    playBuffer(buffer)
-                end
-            end
-            if paused then
-                os.pullEvent("modem_message")
-                os.sleep(0.05)
-            end
+            msg = awaitMessage(bufferChannel, controlChannel, "buffer")
+            if msg.buffer then playBuffer(msg.buffer, clientVolume) end
         end
     end
 
     local receiveMessage = function()
+        local msg
         while true do
             print("Listening for updates")
-
-            local e, s, c, rc, msg, d = os.pullEvent("modem_message")
-            if rc == controlChannel then
-                -- Start
-                if c == startChannel then
-                    paused = false
-                    buffer = nil
-                    print("Starting playback")
-                end
-                -- Song buffer
-                if c == bufferChannel then
-                    print("Received song buffer... playing")
-                end
-                -- Pause
-                if c == pauseChannel then
-                    paused = msg
-                    speaker.stop()
-                    print("Received pause command. Paused = " .. tostring(paused))
-                end
-                -- Stop
-                if c == stopChannel then
-                    paused = false
-                    buffer = nil
-                    speaker.stop()
-                    print("Received stop command")
-                end
+            msg = awaitMessage(clientChannel, controlChannel, "any")
+            -- Start
+            if msg.command == "start" then
+                print("Starting playback")
+            end
+            -- Song buffer
+            if msg.command == "buffer" then
+                print("Received song buffer... playing")
+            end
+            -- Pause
+            if msg.command == "pause" then
+                if msg.pause then speaker.stop() end
+                print("Received pause command. Pause = " .. tostring(msg.pause))
+            end
+            -- Stop
+            if msg.command == "stop" then
+                speaker.stop()
+                print("Received stop command")
+            end
+            -- Volume
+            if msg.command == "volume" then
+                print("Received volume command. Volume = " ..tostring(clientVolume) .. " -> " .. tostring(msg.volume))
+                clientVolume = msg.volume
             end
         end
     end
@@ -150,10 +144,6 @@ local getSongHandle = function(songID)
         songID = newSongID
     end
 
-    if songID.speed == 2 then
-        error("Please use 48khz audio in your repository")
-    end
-
     local h, err = http.get({ ["url"] = songID.file, ["binary"] = true, ["redirect"] = true }) -- write in binary mode
     if not h then error("Failed to download song: " .. err) end
 
@@ -162,17 +152,23 @@ end
 
 -- Control Server
 musicme.gui = function(arguments)
-    modem.open(controlChannel)
-    modem.open(connectChannel)
+    -- Set serverVolume if found
+    if arguments[2] and tonumber(arguments[2]) then serverVolume = math.min(math.max(tonumber(arguments[2]), 0), 3) end
 
+    -- Open modems
+    modem.open(controlChannel)
+    modem.open(clientChannel)
     -- Create GUI and decoder
     local main = basalt.createFrame()
+    if not main then error("Failed to create basalt frame") end
+
     local thread = main:addThread()
     local decoder = dfpwm.make_intdecoder()
 
     -- Variables
-    local paused = false
-    local currentSong = nil
+    local pause = false
+    local playback = false
+    local selectedSong = nil
 
     -- Song list
     local list = main:addList()
@@ -181,50 +177,52 @@ musicme.gui = function(arguments)
     for i, o in pairs(index.songs) do list:addItem(index.songs[i].author .. " - " .. index.songs[i].name) end
 
     -- Automatically update current song whenever screen is clicked
-    main:onClick(function() currentSong = index.songs[list:getItemIndex()] end)
+    main:onClick(function() selectedSong = index.songs[list:getItemIndex()] end)
 
     -- Current Track
     local currentlyPlaying = main:addLabel()
         :setPosition(29, "parent.h - 3")
-        :setSize("parent.w - 31", 3)
+        :setSize("parent.w - 36", 3)
         :setText("Now Playing: ")
     local updateTrack = function(status)
-        if currentSong ~= nil then
-            currentlyPlaying:setText(status .. ": " .. currentSong.author .. " - " .. currentSong.name)
+        if selectedSong ~= nil and playback then
+            currentlyPlaying:setText(status .. ": " .. selectedSong.author .. " - " .. selectedSong.name)
         end
-        if currentSong == nil then
+        if selectedSong == nil or not playback then
             currentlyPlaying:setText(status, ":")
         end
     end
 
     -- Functions
     local startPlayback = function()
+        playback = true
         local broadcast = function()
-            local songHandle = getSongHandle(currentSong)
+            local songHandle = getSongHandle(selectedSong)
             while true do
-                local chunk = songHandle.read(16 * 128)
-                if not chunk then
-                    updateTrack("Now Playing", nil)
-                    break
-                end
+                while pause do os.pullEvent() end
+                local chunk = songHandle.read(128 * bufferLength)
+                if not chunk then updateTrack("Now Playing") playback = false break end
                 local buffer = decoder(chunk)
-                modem.transmit(bufferChannel, controlChannel, buffer)
-
-                awaitMessage(controlChannel, bufferChannel, true)
+                modem.transmit(bufferChannel, controlChannel, {command="buffer", buffer=buffer})
+                playBuffer(buffer, serverVolume)
             end
             songHandle.close()
         end
-        modem.transmit(pauseChannel, controlChannel, false)
-        modem.transmit(startChannel, controlChannel, true)
+        modem.transmit(clientChannel, controlChannel, {command="pause", pause=false})
+        modem.transmit(clientChannel, controlChannel, {command="start", start=true})
         thread:start(broadcast)
     end
     local pausePlayback = function()
-        paused = not paused
-        modem.transmit(pauseChannel, controlChannel, paused)
+        pause = not pause
+        modem.transmit(clientChannel, controlChannel, {command="pause", pause=pause})
     end
     local stopPlayback = function()
-        modem.transmit(stopChannel, controlChannel, true)
+        modem.transmit(clientChannel, controlChannel, {command="stop", stop=true})
+        playback = false
         thread:stop()
+    end
+    local setVolume = function()
+        modem.transmit(clientChannel, controlChannel, {command="volume", volume=clientVolume})
     end
 
     -- Play Button
@@ -235,11 +233,6 @@ musicme.gui = function(arguments)
         :setHorizontalAlign("center")
         :setVerticalAlign("center")
         :setBackground(colors.lime)
-    local playOnClick = function()
-        startPlayback()
-        updateTrack("Now Playing")
-    end
-    playButton:onClick(playOnClick)
 
     -- Pause Button
     local pauseButton = main:addButton()
@@ -249,20 +242,6 @@ musicme.gui = function(arguments)
         :setHorizontalAlign("center")
         :setVerticalAlign("center")
         :setBackground(colors.orange)
-    local pauseOnClick = function()
-        pausePlayback()
-        if paused then
-            pauseButton:setText("Unpause")
-            pauseButton:setBackground(colors.green)
-            updateTrack("Paused")
-        end
-        if not paused then
-            pauseButton:setText("Pause")
-            pauseButton:setBackground(colors.orange)
-            updateTrack("Now Playing")
-        end
-    end
-    pauseButton:onClick(pauseOnClick)
 
     -- Stop Button
     local stopButton = main:addButton()
@@ -272,64 +251,103 @@ musicme.gui = function(arguments)
         :setHorizontalAlign("center")
         :setVerticalAlign("center")
         :setBackground(colors.red)
-    local stopOnClick = function()
-        stopPlayback()
-        paused = false
+
+    -- Volume Up Button
+    local volumeUpButton = main:addButton()
+        :setPosition("parent.w - 3", "parent.h - 3")
+        :setSize(3, 1)
+        :setText("+")
+        :setHorizontalAlign("center")
+        :setVerticalAlign("center")
+
+    -- Volume Down Button
+    local volumeDownButton = main:addButton()
+        :setPosition("parent.w - 3", "parent.h - 1")
+        :setSize(3, 1)
+        :setText("-")
+        :setHorizontalAlign("center")
+        :setVerticalAlign("center")
+
+    local playOnClick = function()
+        startPlayback()
+        updateTrack("Now Playing")
         pauseButton:setText("Pause")
         pauseButton:setBackground(colors.orange)
-        currentSong = nil
+    end
+    playButton:onClick(playOnClick)
+
+    local pauseOnClick = function()
+        pausePlayback()
+        if pause then
+            pauseButton:setText("Unpause")
+            pauseButton:setBackground(colors.green)
+            updateTrack("Paused")
+        end
+        if not pause then
+            pauseButton:setText("Pause")
+            pauseButton:setBackground(colors.orange)
+            updateTrack("Now Playing")
+        end
+    end
+    pauseButton:onClick(pauseOnClick)
+
+    local stopOnClick = function()
+        stopPlayback()
+        pause = false
+        pauseButton:setText("Pause")
+        pauseButton:setBackground(colors.orange)
+        selectedSong = nil
         updateTrack("Now Playing")
     end
     stopButton:onClick(stopOnClick)
+
+    local volumeUpOnClick = function()
+        clientVolume = math.min(clientVolume + 0.1, 3)
+        setVolume()
+    end
+    volumeUpButton:onClick(volumeUpOnClick)
+
+    local volumeDownOnClick = function()
+        clientVolume = math.max(clientVolume - 0.1, 0)
+        setVolume()
+    end
+    volumeDownButton:onClick(volumeDownOnClick)
 
     basalt.autoUpdate()
 end
 
 musicme.help = function(arguments)
 print([[
+All computers running musicme must have a modem and speaker attached.
+The GUI server computer defaults to being muted.
+
 Usage: <action> [arguments]
 Actions:
-musicify
-    help            -- Displays this message
-    gui             -- Starts the GUI. GUI computer must have a modem attached. Will automatically detect monitors.
-    client          -- Runs the client. Clients must have a modem and a speaker attached.
-    update          -- Updates musicme
-    startup <arg>   -- Creates a startup file. Specify whether it is for 'client' or for 'gui'
+musicme
+    help                -- Displays this message
+    gui <serverVolume>  -- Starts the GUI. Will automatically detect monitors.
+    client              -- Runs the client.
+    update              -- Updates musicme
+    startup <arg>       -- Creates a startup file. Specify whether it is for 'client' or for 'gui'
 ]])
 end
-
--- musicme.url = function(arguments)
---     if string.find(arguments[1], "youtube") then
---         print("Youtube support isn't garuanteed, proceed with caution")
---     end
---     play(arguments[1])
--- end
 
 musicme.update = function(arguments)
     print("Updating Musicify, please hold on.")
     update()
 end
 
--- musicme.shuffle = function(arguments)
---     local from = arguments[1] or 1
---     local to = arguments[2] or #index.songs
---     if tostring(arguments[1]) and not tonumber(arguments[1]) and arguments[1] then -- Check if selection is valid
---         error("Please specify arguments in a form like `musicify shuffle 1 5`", 0)
---         return
---     end
---     while true do
---         print("Currently in shuffle mode")
---         local ranNum = math.random(from, to)
---         play(index.songs[ranNum])
---     end
--- end
-
 musicme.monitor = function(arguments)
-    if not monitor then
-        print("A monitor must be attached")
-        return
-    end
-    shell.run("monitor " .. peripheral.getName(monitor) .. " musicme gui monitor")
+    if not monitor then print("A monitor must be attached") return end
+
+    local scale = 0.5
+    if arguments[1] then scale = arguments[1] end
+    if not ((2 * scale) % 1) then scale = 0.5 end
+    monitor.setTextScale(scale)
+
+    if arguments[2] then serverVolume = arguments[2] end
+
+    shell.run("monitor " .. peripheral.getName(monitor) .. " musicme gui monitor " .. tostring(serverVolume))
 end
 
 musicme.startup = function(arguments)
@@ -352,12 +370,9 @@ musicme.startup = function(arguments)
     print("startup.lua created successfully")
 end
 
-for i, o in pairs(args) do
-    print(i .. " - " .. o)
-end
-
+shell.run("clear")
 local command = table.remove(args, 1)
-if command == "gui" and monitor and not args[1] then
+if monitor and command == "gui" and args[1] ~= "monitor" then
     musicme["monitor"](args)
 elseif musicme[command] then
     musicme[command](args)
