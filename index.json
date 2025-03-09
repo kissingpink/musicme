@@ -2,9 +2,16 @@
     "latestVersion": "1.0.0",
     "indexName": "Jared",
     "songs": [{
-        "type": "song",
-        "name": "Du Hast",
-        "author": "Rammstein",
-        "file": "https://github.com/JaredWogan/musicme/raw/refs/heads/master/Processed/Du%20hast.dfpwm"
-    }]
+            "type": "song",
+            "name": "Du Hast",
+            "author": "Rammstein",
+            "file": "https://github.com/JaredWogan/musicme/raw/refs/heads/master/Processed/Du%20hast.dfpwm"
+        },
+        {
+            "type": "song",
+            "name": "Voices In My Head",
+            "author": "Anyma, Argy, Son of Son",
+            "file": "https://github.com/JaredWogan/musicme/raw/refs/heads/master/Processed/Voices%20In%20My%20Head.dfpwm"
+        }
+    ]
 }
