@@ -200,7 +200,6 @@ musicme.gui = function(arguments)
     -- Functions
     local startPlayback = function()
         local broadcast = function()
-            -- local songID = index.songs[list:getItemIndex()]
             local songHandle = getSongHandle(currentSong)
             while true do
                 local chunk = songHandle.read(16 * 128)
@@ -299,43 +298,48 @@ musicify
 ]])
 end
 
-musicme.url = function(arguments)
-    if string.find(arguments[1], "youtube") then
-        print("Youtube support isn't garuanteed, proceed with caution")
-    end
-    play(arguments[1])
-end
+-- musicme.url = function(arguments)
+--     if string.find(arguments[1], "youtube") then
+--         print("Youtube support isn't garuanteed, proceed with caution")
+--     end
+--     play(arguments[1])
+-- end
 
 musicme.update = function(arguments)
     print("Updating Musicify, please hold on.")
     update()
 end
 
-musicme.shuffle = function(arguments)
-    local from = arguments[1] or 1
-    local to = arguments[2] or #index.songs
-    if tostring(arguments[1]) and not tonumber(arguments[1]) and arguments[1] then -- Check if selection is valid
-        error("Please specify arguments in a form like `musicify shuffle 1 5`", 0)
-        return
-    end
-    while true do
-        print("Currently in shuffle mode")
-        local ranNum = math.random(from, to)
-        play(index.songs[ranNum])
-    end
-end
+-- musicme.shuffle = function(arguments)
+--     local from = arguments[1] or 1
+--     local to = arguments[2] or #index.songs
+--     if tostring(arguments[1]) and not tonumber(arguments[1]) and arguments[1] then -- Check if selection is valid
+--         error("Please specify arguments in a form like `musicify shuffle 1 5`", 0)
+--         return
+--     end
+--     while true do
+--         print("Currently in shuffle mode")
+--         local ranNum = math.random(from, to)
+--         play(index.songs[ranNum])
+--     end
+-- end
 
 musicme.monitor = function(arguments)
-    shell.run("monitor " .. peripheral.getName(monitor) .. " musicme gui")
+    if not monitor then
+        print("A monitor must be attached")
+        return
+    end
+    shell.run("monitor " .. peripheral.getName(monitor) .. " musicme gui monitor")
 end
 
 musicme.startup = function(arguments)
-    if arguments ~= "client" or arguments ~= "gui" then
+    local mode = table.remove(arguments, 1)
+    print(mode)
+    if mode ~= "client" and mode ~= "gui" then
         print("Must indicate whether startup file is for GUI or for client.")
         print("Use 'musicme help' for help")
         return
     end
-    local mode = table.remove(arguments, 1)
     if fs.exists("startup.lua") then
         fs.move("startup.lua", "/old.musicme/startup.lua")
     end
@@ -348,16 +352,14 @@ musicme.startup = function(arguments)
     print("startup.lua created successfully")
 end
 
-local command = table.remove(args, 1)
 for i, o in pairs(args) do
     print(i .. " - " .. o)
 end
 
-if monitor then
-    term.redirect(monitor)
-end
-
-if musicme[command] then
+local command = table.remove(args, 1)
+if command == "gui" and monitor and not args[1] then
+    musicme["monitor"](args)
+elseif musicme[command] then
     musicme[command](args)
 else
     print("Please provide a valid command. For usage, use `musicime help`.")
