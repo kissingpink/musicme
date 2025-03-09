@@ -365,7 +365,7 @@ musicme.startup = function(arguments)
         fs.copy("/lib/clientStartup.lua", "startup.lua")
     end
     if mode == "gui" then
-        fs.copy("/lib/clientStartup.lua", "startup.lua")
+        fs.copy("/lib/guiStartup.lua", "startup.lua")
     end
     print("startup.lua created successfully")
 end
