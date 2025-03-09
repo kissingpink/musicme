@@ -275,6 +275,7 @@ musicme.gui = function(arguments)
         :setBackground(colors.red)
     local stopOnClick = function()
         stopPlayback()
+        paused = false
         pauseButton:setText("Pause")
         pauseButton:setBackground(colors.orange)
         currentSong = nil
