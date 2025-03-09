@@ -31,7 +31,7 @@ while true do
 
         shell.run("clear")
         print("Installing now")
-        shell.run("rm musicify")
+        shell.run("rm musicme")
         shell.run("wget " .. url)
 
         print("Downloading libraries right now")
