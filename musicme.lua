@@ -95,9 +95,10 @@ musicme.client = function(arguments)
         while true do
             print("Listening for updates")
             msg = awaitMessage(clientChannel, controlChannel, "any")
+            -- Not sure why the reboots are required. Perhaps a desync issue when running on a server
             -- Start
             if msg.command == "start" then
-                print("Starting playback")
+                shell.run("reboot")
             end
             -- Song buffer
             if msg.command == "buffer" then
@@ -106,12 +107,12 @@ musicme.client = function(arguments)
             -- Pause
             if msg.command == "pause" then
                 if msg.pause then speaker.stop() end
-                print("Received pause command. Pause = " .. tostring(msg.pause))
+                shell.run("reboot")
             end
             -- Stop
             if msg.command == "stop" then
                 speaker.stop()
-                print("Received stop command")
+                shell.run("reboot")
             end
             -- Volume
             if msg.command == "volume" then
@@ -194,6 +195,9 @@ musicme.gui = function(arguments)
     end
 
     -- Functions
+    local setVolume = function()
+        modem.transmit(clientChannel, controlChannel, {command="volume", volume=clientVolume})
+    end
     local startPlayback = function()
         playback = true
         local broadcast = function()
@@ -208,6 +212,7 @@ musicme.gui = function(arguments)
             end
             songHandle.close()
         end
+        setVolume()
         modem.transmit(clientChannel, controlChannel, {command="pause", pause=false})
         modem.transmit(clientChannel, controlChannel, {command="start", start=true})
         thread:start(broadcast)
@@ -220,9 +225,6 @@ musicme.gui = function(arguments)
         modem.transmit(clientChannel, controlChannel, {command="stop", stop=true})
         playback = false
         thread:stop()
-    end
-    local setVolume = function()
-        modem.transmit(clientChannel, controlChannel, {command="volume", volume=clientVolume})
     end
 
     -- Play Button
@@ -320,6 +322,8 @@ musicme.help = function(arguments)
 print([[
 All computers running musicme must have a modem and speaker attached.
 The GUI server computer defaults to being muted.
+Currently the clients will reboot whenever the pause or stop buttons are hit.
+Configuring auto startup is highly encouraged using 'musicme startup'.
 
 Usage: <action> [arguments]
 Actions:
