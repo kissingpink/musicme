@@ -12,6 +12,30 @@
             "name": "Voices In My Head",
             "author": "Anyma, Argy, Son of Son",
             "file": "https://github.com/JaredWogan/musicme/raw/refs/heads/master/Processed/Voices%20In%20My%20Head.dfpwm"
+        },
+        {
+            "type": "song",
+            "name": "Under Pressure",
+            "author": "Queen",
+            "file": "https://github.com/JaredWogan/musicme/raw/refs/heads/master/Processed/Under%20Pressure.dfpwm"
+        },
+        {
+            "type": "song",
+            "name": "Glamorous",
+            "author": "Fergie",
+            "file": "https://github.com/JaredWogan/musicme/raw/refs/heads/master/Processed/Glamorous.dfpwm"
+        },
+        {
+            "type": "song",
+            "name": "100 Digits of Pi",
+            "author": "YouTube",
+            "file": "https://github.com/JaredWogan/musicme/raw/refs/heads/master/Processed/PiSong.dfpwm"
+        },
+        {
+            "type": "song",
+            "name": "Cat's in the Cradle",
+            "author": "Harry Chapin",
+            "file": "https://github.com/JaredWogan/musicme/raw/refs/heads/master/Processed/CatCradle.dfpwm"
         }
     ]
 }
