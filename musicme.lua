@@ -11,16 +11,18 @@ if not dfpwm then error("dfpwm wasn't found") end
 -- Options
 local version = "1.0.0"
 local repo = "https://raw.githubusercontent.com/JaredWogan/musicme/master/index.json"
-local autoUpdates = true
 local indexURL = repo .. "?cb=" .. os.epoch("utc")
-local bufferLength = 16
-local clientVolume = 1
-local serverVolume = 0
+
+-- Settings
+local autoUpdates = settings.get("autoUpdates", true)
+local bufferLength = settings.get("bufferLength", 16)
+local clientVolume = settings.get("clientVolume", 1)
+local serverVolume = settings.get("serverVolume", 0)
 
 -- Channels
-local controlChannel = 2561
-local bufferChannel = controlChannel + 1
-local clientChannel = controlChannel + 2
+local controlChannel = settings.get("controlChannel", 2561)
+local bufferChannel = settings.get("bufferChannel", controlChannel + 1)
+local clientChannel = settings.get("clientChannel", controlChannel + 2)
 
 -- Peripherals
 local modem = peripheral.find("modem")
@@ -98,6 +100,8 @@ musicme.client = function(arguments)
             -- Not sure why the reboots are required. Perhaps a desync issue when running on a server
             -- Start
             if msg.command == "start" then
+                print("Starting playback...")
+                os.sleep(2)
                 shell.run("reboot")
             end
             -- Song buffer
@@ -126,6 +130,9 @@ musicme.client = function(arguments)
 end
 
 local getSongHandle = function(songID)
+    if songID == nil then
+        error("songID is nil")
+    end
     if type(songID) == "table" then
         if string.find(songID.file, "flac") or string.find(songID.file, "wav") or string.find(songID.file, "mp3") or string.find(songID.file, "aac") or string.find(songID.file, "opus") or string.find(songID.file, "ogg") then
             songID.file = "https://cc.alexdevs.me/dfpwm?url=" .. textutils.urlEncode(songID.file)
@@ -163,13 +170,15 @@ musicme.gui = function(arguments)
     local main = basalt.createFrame()
     if not main then error("Failed to create basalt frame") end
 
-    local thread = main:addThread()
+    local playbackThread = main:addThread()
     local decoder = dfpwm.make_intdecoder()
 
     -- Variables
     local pause = false
     local playback = false
+    local shuffle = false
     local selectedSong = nil
+    local playingSong = nil
 
     -- Song list
     local list = main:addList()
@@ -177,45 +186,29 @@ musicme.gui = function(arguments)
         :setSize("parent.w - 2", "parent.h - 6")
     for i, o in pairs(index.songs) do list:addItem(index.songs[i].author .. " - " .. index.songs[i].name) end
 
-    -- Automatically update current song whenever screen is clicked
+    -- Automatically update selectedSong song whenever screen is clicked
     main:onClick(function() selectedSong = index.songs[list:getItemIndex()] end)
 
     -- Current Track
     local currentlyPlaying = main:addLabel()
         :setPosition(29, "parent.h - 3")
-        :setSize("parent.w - 36", 3)
+        :setSize("parent.w - 42", 3)
         :setText("Now Playing: ")
-    local updateTrack = function(status)
-        if selectedSong ~= nil and playback then
-            currentlyPlaying:setText(status .. ": " .. selectedSong.author .. " - " .. selectedSong.name)
+    local updateTrack = function()
+        if playingSong ~= nil and playback then
+            local status = "Now Playing: "
+            if pause then status = "Paused: " end
+            currentlyPlaying:setText(status .. playingSong.author .. " - " .. playingSong.name)
         end
-        if selectedSong == nil or not playback then
-            currentlyPlaying:setText(status, ":")
+        if playingSong == nil or not playback then
+            currentlyPlaying:setText("Now Playing: ")
         end
     end
+    main:onEvent(updateTrack)
 
     -- Functions
     local setVolume = function()
         modem.transmit(clientChannel, controlChannel, {command="volume", volume=clientVolume})
-    end
-    local startPlayback = function()
-        playback = true
-        local broadcast = function()
-            local songHandle = getSongHandle(selectedSong)
-            while true do
-                while pause do os.pullEvent() end
-                local chunk = songHandle.read(128 * bufferLength)
-                if not chunk then updateTrack("Now Playing") playback = false break end
-                local buffer = decoder(chunk)
-                modem.transmit(bufferChannel, controlChannel, {command="buffer", buffer=buffer})
-                playBuffer(buffer, serverVolume)
-            end
-            songHandle.close()
-        end
-        setVolume()
-        modem.transmit(clientChannel, controlChannel, {command="pause", pause=false})
-        modem.transmit(clientChannel, controlChannel, {command="start", start=true})
-        thread:start(broadcast)
     end
     local pausePlayback = function()
         pause = not pause
@@ -224,7 +217,45 @@ musicme.gui = function(arguments)
     local stopPlayback = function()
         modem.transmit(clientChannel, controlChannel, {command="stop", stop=true})
         playback = false
-        thread:stop()
+        playbackThread:stop()
+    end
+    local startPlayback = function()
+        local broadcastSong = function(song)
+            playingSong = selectedSong
+            local songHandle = getSongHandle(song)
+            while true do
+                while pause do os.pullEvent() end
+
+                -- Read next section of the song
+                local chunk = songHandle.read(128 * bufferLength)
+
+                -- If chunk is nil then song is finished
+                if not chunk then break end
+
+                -- Decode the chunk and play it
+                local buffer = decoder(chunk)
+                modem.transmit(bufferChannel, controlChannel, {command="buffer", buffer=buffer})
+                playBuffer(buffer, serverVolume)
+            end
+            songHandle.close()
+        end
+
+        local broadcast = function()
+            if not shuffle then broadcastSong(selectedSong) end
+            if shuffle then
+                while shuffle do
+                    local randomSong = math.random(1, #(index.songs))
+                    list:selectItem(randomSong)
+                    selectedSong = index.songs[randomSong]
+                    broadcastSong(selectedSong)
+                end
+            end
+        end
+
+        playback = true
+        setVolume()
+        modem.transmit(clientChannel, controlChannel, {command="start", start=true})
+        playbackThread:start(broadcast)
     end
 
     -- Play Button
@@ -254,6 +285,15 @@ musicme.gui = function(arguments)
         :setVerticalAlign("center")
         :setBackground(colors.red)
 
+    -- Shuffle Button
+    local shuffleButton = main:addButton()
+        :setPosition("parent.w - 9", "parent.h - 2")
+        :setSize(4, 1)
+        :setText("=>")
+        :setHorizontalAlign("center")
+        :setVerticalAlign("center")
+        :setBackground(colors.red)
+
     -- Volume Up Button
     local volumeUpButton = main:addButton()
         :setPosition("parent.w - 3", "parent.h - 3")
@@ -272,7 +312,7 @@ musicme.gui = function(arguments)
 
     local playOnClick = function()
         startPlayback()
-        updateTrack("Now Playing")
+        updateTrack()
         pauseButton:setText("Pause")
         pauseButton:setBackground(colors.orange)
     end
@@ -283,12 +323,12 @@ musicme.gui = function(arguments)
         if pause then
             pauseButton:setText("Unpause")
             pauseButton:setBackground(colors.green)
-            updateTrack("Paused")
+            updateTrack()
         end
         if not pause then
             pauseButton:setText("Pause")
             pauseButton:setBackground(colors.orange)
-            updateTrack("Now Playing")
+            updateTrack()
         end
     end
     pauseButton:onClick(pauseOnClick)
@@ -299,7 +339,7 @@ musicme.gui = function(arguments)
         pauseButton:setText("Pause")
         pauseButton:setBackground(colors.orange)
         selectedSong = nil
-        updateTrack("Now Playing")
+        updateTrack()
     end
     stopButton:onClick(stopOnClick)
 
@@ -314,6 +354,17 @@ musicme.gui = function(arguments)
         setVolume()
     end
     volumeDownButton:onClick(volumeDownOnClick)
+
+    local shuffleOnClick = function()
+        shuffle = not shuffle
+        if shuffle then
+            shuffleButton:setBackground(colors.green)
+        end
+        if not shuffle then
+            shuffleButton:setBackground(colors.red)
+        end
+    end
+    shuffleButton:onClick(shuffleOnClick)
 
     basalt.autoUpdate()
 end

@@ -40,11 +40,13 @@ while true do
         shell.run("rm /lib/dfpwm.lua")
         shell.run("rm /lib/clientStartup.lua")
         shell.run("rm /lib/guiStartup.lua")
+        shell.run("rm .settings")
         shell.run("wget " .. baseRepoURL .. "/lib/semver.lua /lib/semver.lua")
         shell.run("wget " .. baseRepoURL .. "/lib/dfpwm.lua /lib/dfpwm.lua")
         shell.run("wget " .. baseRepoURL .. "/lib/basalt.lua /lib/basalt.lua")
         shell.run("wget " .. baseRepoURL .. "/lib/clientStartup.lua /lib/clientStartup.lua")
         shell.run("wget " .. baseRepoURL .. "/lib/guiStartup.lua /lib/guiStartup.lua")
+        shell.run("wget " .. baseRepoURL .. "/.settings .settings")
 
         os.sleep(2)
         shell.run("clear")

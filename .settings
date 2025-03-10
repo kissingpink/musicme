@@ -1,0 +1,9 @@
+{
+    autoUpdates = true,
+    controlChannel = 2561,
+    clientChannel = 2562,
+    bufferChannel = 2563,
+    clientVolume = 1,
+    serverVolume = 0,
+    bufferLength = 16,
+}
