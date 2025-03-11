@@ -57,6 +57,15 @@ end
 local musicme = {}
 local args = { ... }
 
+local tableFind = function(table, value)
+    local set = function(list)
+        local s = {}
+        for _, l in pairs(list) do s[l] = true end
+        return s
+    end
+    return set(table)[value]
+end
+
 local awaitMessage = function(channel, replyChannel, command)
     local e, s, c, rc, msg, d = os.pullEvent("modem_message")
     if command == "any" then
@@ -243,8 +252,16 @@ musicme.gui = function(arguments)
         local broadcast = function()
             if not shuffle then broadcastSong(selectedSong) end
             if shuffle then
+                local history = {}
                 while shuffle do
+                    if #history > math.floor(#(index.songs) / 2) then table.remove(history) end
+
                     local randomSong = math.random(1, #(index.songs))
+                    while tableFind(history, randomSong) do
+                        randomSong = math.random(1, #(index.songs))
+                    end
+                    table.insert(history, 1, randomSong)
+
                     list:selectItem(randomSong)
                     selectedSong = index.songs[randomSong]
                     broadcastSong(selectedSong)
