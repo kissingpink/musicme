@@ -1,4 +1,4 @@
-local apiURL = "http://api.github.com/repos/kissingpink/musicme/releases"
+local apiURL = "https://api.github.com/repos/kissingpink/musicme/releases"
 local baseRepoURL = "https://raw.githubusercontent.com/kissingpink/musicme/master"
 local args = { ... }
 local skipcheck = false
