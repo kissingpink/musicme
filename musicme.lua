@@ -10,7 +10,7 @@ if not dfpwm then error("dfpwm wasn't found") end
 
 -- Options
 local version = "1.0.0"
-local repo = "https://raw.githubusercontent.com/JaredWogan/musicme/master/index.json"
+local repo = "https://raw.githubusercontent.com/kissingpink/musicme/master/index.json"
 local indexURL = repo .. "?cb=" .. os.epoch("utc")
 
 -- Settings
@@ -46,7 +46,7 @@ if not index then error("The index is malformed.", 0) end
 
 -- Check for updates
 local function update()
-    shell.run("wget run https://raw.githubusercontent.com/JaredWogan/musicme/master/install.lua")
+    shell.run("wget run https://raw.githubusercontent.com/kissingpink/musicme/master/install.lua")
 end
 if v(version) < v(index.latestVersion) and autoUpdates then
     error("Client outdated... Running Updates", 0)
