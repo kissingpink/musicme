@@ -3,15 +3,15 @@
     "indexName": "Jared",
     "songs": [{
             "type": "song",
-            "name": "Du Hast",
-            "author": "Rammstein",
-            "file": "https://github.com/kissingpink/musicme/raw/refs/heads/master/Processed/Du%20hast.dfpwm"
+            "name": "You Don't Know How It Feels",
+            "author": "Tom Perky",
+            "file": "https://github.com/kissingpink/musicme/raw/refs/heads/master/Processed/TomPerky.dfpwm"
         },
         {
             "type": "song",
-            "name": "Voices In My Head",
-            "author": "Anyma, Argy, Son of Son",
-            "file": "https://github.com/kissingpink/musicme/raw/refs/heads/master/Processed/Voices%20In%20My%20Head.dfpwm"
+            "name": "Shooting Star",
+            "author": "Bad Company",
+            "file": "https://github.com/kissingpink/musicme/raw/refs/heads/master/Processed/Shooting%20Star.dfpwm"
         },
         {
             "type": "song",
@@ -21,9 +21,9 @@
         },
         {
             "type": "song",
-            "name": "Glamorous",
-            "author": "Fergie",
-            "file": "https://github.com/kissingpink/musicme/raw/refs/heads/master/Processed/Glamorous.dfpwm"
+            "name": "Money",
+            "author": "Pink Floyd",
+            "file": "https://github.com/kissingpink/musicme/raw/refs/heads/master/Processed/Money.dfpwm"
         },
         {
             "type": "song",
