@@ -27,16 +27,129 @@
         },
         {
             "type": "song",
-            "name": "Space High",
-            "author": "Lil Uzi",
-            "file": "https://github.com/kissingpink/musicme/raw/refs/heads/master/Processed/SpaceHigh.dfpwm"
-        },
-        {
-            "type": "song",
             "name": "Cat's in the Cradle",
             "author": "Harry Chapin",
             "file": "https://github.com/kissingpink/musicme/raw/refs/heads/master/Processed/CatCradle.dfpwm"
-        }
-        
+        }, 
+        {
+            "type": "song",
+            "name": "Beverly Hills",
+            "author": "Weezer",
+            "file": "https://github.com/kissingpink/musicme/raw/refs/heads/master/Processed/Beverly%20Hills.dfpwm"
+        },
+        {
+            "type": "song",
+            "name": "Buddy Holly",
+            "author": "Weezer",
+            "file": "https://github.com/kissingpink/musicme/raw/refs/heads/master/Processed/Buddy%20Holly.dfpwm"
+        },
+        {
+            "type": "song",
+            "name": "Fly",
+            "author": "Sugar Ray",
+            "file": "https://github.com/kissingpink/musicme/raw/refs/heads/master/Processed/Sugar%20Ray%20Fly.dfpwm"
+        },
+        {
+            "type": "song",
+            "name": "Dani California",
+            "author": "Red Hot Chili Peppers",
+            "file": "https://github.com/kissingpink/musicme/raw/refs/heads/master/Processed/Dani%20California.dfpwm"
+        },
+        {
+            "type": "song",
+            "name": "Black Hole Sun",
+            "author": "Soundgarden",
+            "file": "https://github.com/kissingpink/musicme/raw/refs/heads/master/Processed/Black%20Hole%20Sun.dfpwm"
+        },
+        {
+            "type": "song",
+            "name": "Music and Me",
+            "author": "Nate Dogg",
+            "file": "https://github.com/kissingpink/musicme/raw/refs/heads/master/Processed/Music%20and%20Me.dfpwm"
+        },
+        {
+            "type": "song",
+            "name": "So Fly",
+            "author": "Nate Dogg",
+            "file": "https://github.com/kissingpink/musicme/raw/refs/heads/master/Processed/So%20Fly.dfpwm"
+        },    
+        {
+            "type": "song",
+            "name": "Doobie Ashtray",
+            "author": "Devin the Dude",
+            "file": "https://github.com/kissingpink/musicme/raw/refs/heads/master/Processed/Doobie%20Ashtray.dfpwm"
+        },
+        {
+            "type": "song",
+            "name": "Xxplosive",
+            "author": "Dr. Dre",
+            "file": "https://github.com/kissingpink/musicme/raw/refs/heads/master/Processed/Xxplosive.dfpwm"
+        },
+        {
+            "type": "song",
+            "name": "Drop It Like It's Hot",
+            "author": "Snoop Dogg ft. Pharrel",
+            "file": "https://github.com/kissingpink/musicme/raw/refs/heads/master/Processed/Drop%20It%20Like%20Its%20Hot.dfpwm"
+        },
+        {
+            "type": "song",
+            "name": "Digitis",
+            "author": "Young Thug",
+            "file": "https://github.com/kissingpink/musicme/raw/refs/heads/master/Processed/Dani%20California.dfpwm"
+        },
+        {
+            "type": "song",
+            "name": "Space High",
+            "author": "Lil Uzi",
+            "file": "https://github.com/kissingpink/musicme/raw/refs/heads/master/Processed/SpaceHigh.dfpwm"
+        },   
+        {
+            "type": "song",
+            "name": "Rude",
+            "author": "Lil Yachty",
+            "file": "https://github.com/kissingpink/musicme/raw/refs/heads/master/Processed/Lil%20Yachty%20Rude.dfpwm"
+        }, 
+        {
+            "type": "song",
+            "name": "MINDOFACROOK",
+            "author": "Tony Schnnow",
+            "file": "https://github.com/kissingpink/musicme/raw/refs/heads/master/Processed/MINDOFACROOK.dfpwm"
+        },
+        {
+            "type": "song",
+            "name": "Hood N*gga",
+            "author": "Bashfortheworld",
+            "file": "https://github.com/kissingpink/musicme/raw/refs/heads/master/Processed/Bashfortheworld.dfpwm"
+        },
+        {
+            "type": "song",
+            "name": "Resurrections",
+            "author": "Celeste OST",
+            "file": "https://github.com/kissingpink/musicme/raw/refs/heads/master/Processed/Resurrections.dfpwm"
+        },
+        {
+            "type": "song",
+            "name": "Secunda",
+            "author": "Skyrim OST",
+            "file": "https://github.com/kissingpink/musicme/raw/refs/heads/master/Processed/Secunda.dfpwm"
+        },
+        {
+            "type": "song",
+            "name": "Far Horizons",
+            "author": "Skyrim OST",
+            "file": "https://github.com/kissingpink/musicme/raw/refs/heads/master/Processed/Far%20Horizons.dfpwm"
+        },
+        {
+            "type": "song",
+            "name": "Going Down",
+            "author": "Jake Chudnow",
+            "file": "https://github.com/kissingpink/musicme/raw/refs/heads/master/Processed/Going%20Down.dfpwm"
+        },   
+        {
+            "type": "song",
+            "name": "Moon Men",
+            "author": "Jake Chudnow",
+            "file": "https://github.com/kissingpink/musicme/raw/refs/heads/master/Processed/Jake%20ChudnowMoonMen.dfpwm"
+        }        
     ]
 }
